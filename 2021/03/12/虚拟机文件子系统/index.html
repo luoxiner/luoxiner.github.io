@@ -1,0 +1,213 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>虚拟机文件子系统 | Hexo</title><meta name="description" content="虚拟机文件子系统 - John Doe"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="Hexo"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="Hexo" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="Hexo"><img class="logo-image" src="/logo.png" alt="logo"></a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/Dreyer" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">虚拟机文件子系统</h1><div class="post-info"><a></a>2021-03-12</div><div class="post-content"><h1>虚拟机子系统</h1>
+<h2 id="类文件的格式"><a class="header-anchor" href="#类文件的格式">¶</a>类文件的格式</h2>
+<h3 id="类型"><a class="header-anchor" href="#类型">¶</a>类型</h3>
+<p>常量池常量类型：</p>
+<h4 id="搜索过程"><a class="header-anchor" href="#搜索过程">¶</a>搜索过程</h4>
+<hr>
+<p><em><strong>在这种类文件结构中，如果一个项目有多个item，则采用先使用一个count记录item的个数，在后续使用index访问item</strong></em></p>
+<p>以上常量池中的类型中，都有如下特征：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>u1</td>
+<td>tag</td>
+</tr>
+<tr>
+<td>…</td>
+<td>…</td>
+</tr>
+</tbody>
+</table>
+<p>tag是指常量池类型中的标志，使用每一种标志标定每一个常量池中每一个item的类型信息。</p>
+<p>类如ClassInfo类型：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>name</th>
+<th>数量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>u1</td>
+<td>tag</td>
+<td>1</td>
+</tr>
+<tr>
+<td>u2</td>
+<td>name_Index</td>
+<td>1</td>
+</tr>
+</tbody>
+</table>
+<p><code>name_index</code>存储一个<code>Utf_8</code>的常量类型的首地址。</p>
+<p>Utf_8_info类型如下：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>name</th>
+<th>数量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>U1</td>
+<td>tag</td>
+<td>1</td>
+</tr>
+<tr>
+<td>U2</td>
+<td>length</td>
+<td>1</td>
+</tr>
+<tr>
+<td>U1</td>
+<td>bytes</td>
+<td>length</td>
+</tr>
+</tbody>
+</table>
+<p>因此一个类型的的全限定名的查找顺序如下：</p>
+<pre class="mermaid">graph LR
+class_tag --> classInfo --> nameindex --> name_tag --> utf_8_Info --> bytes_length --> class_name</pre>
+<p>其他具体查找过程类似类型类似。</p>
+<h4 id="常量池常用类型"><a class="header-anchor" href="#常量池常用类型">¶</a>常量池常用类型</h4>
+<h3 id="访问标志"><a class="header-anchor" href="#访问标志">¶</a>访问标志</h3>
+<p>访问标志即访问的权限以及静态与否，接口类型与否，注解类型与否枚举类型与否，抽象等等。</p>
+<p>标志包含着一个类的所有限定词：</p>
+<p><code>abstract</code> <code>public</code> <code>enum</code> <code>final</code> <code>interface</code> <code>annoation</code></p>
+<p>接下来是thisclass和superclass的信息，都是class_Info类型，都是描述类型信息的常量。</p>
+<p>在接下来就是接口信息，和class_Info相似。</p>
+<h3 id="字段"><a class="header-anchor" href="#字段">¶</a>字段</h3>
+<p>字段存放类型的变量，一个字段需要一些限定词来表示字段的作用，例如public，private等。</p>
+<p>字段表：</p>
+<p>字段的访问标志：</p>
+<p>使用或运算结合成一个2字节的量</p>
+<p>name_index指向一个Utf_8_Info的常量池中的一个常量</p>
+<p>接下来是一个描述符（descriptor）</p>
+<p>使用一个描述符来描述字段的类型信息，同样此处的的值也是一个指向常量池的的一个地址，表示一个字符。</p>
+<p>对于数组类型，使用 [ 来描述，一个表示一个维度，<code>int[][] —&gt; [[I</code></p>
+<p>接下来是attribute，表示一些额外信息。</p>
+<h3 id="方法表"><a class="header-anchor" href="#方法表">¶</a>方法表</h3>
+<p>方法表存放类型的方法信息，方法表结构：</p>
+<p>和字段表的形式一样，区别在于descriptor 的表示不一样，是根据方法的返回值参数类型。参数列表 返回值信息，具体信息可见前边对字段的descriptor的描述。</p>
+<p>例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">func</span><span class="params">()</span> --&gt; <span class="params">()</span>V</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">func</span><span class="params">()</span>  --&gt; <span class="params">()</span>I</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">func</span><span class="params">(<span class="keyword">int</span> i)</span> --&gt; <span class="params">(I)</span>I</span></span><br></pre></td></tr></table></figure>
+<p>首先访问标志：</p>
+<p>同样方法表中也包含attribute信息，表达方法的字节码等信息。</p>
+<h3 id="属性表"><a class="header-anchor" href="#属性表">¶</a>属性表</h3>
+<blockquote>
+<p>code属性</p>
+</blockquote>
+<p>code属性是描述方法表中方法的额外属性，包括方法的很多属性。</p>
+<p>方法的堆栈深度和最大局部变量的所需空间（这里的最大是指虚拟机优化之后，经过变量槽的复用计算出来的值）堆栈的最大深度和局部变量所需要的最大空间就可确定出一个方法的内存空间。</p>
+<p>code项目存储方法的字节码</p>
+<p>max_local：同时生存的最多的变量所占的空间的总和</p>
+<h3 id="字节码指令简介"><a class="header-anchor" href="#字节码指令简介">¶</a>字节码指令简介</h3>
+<p>基于堆栈设计的指令执行系统</p>
+<p>字节码指令大小为一字节，因此最多只有256条指令。</p>
+<h1>类加载</h1>
+<p>类的加载，验证，准备，解析，初始化，使用，卸载</p>
+<p>是按顺序<code>开始</code>.</p>
+<h2 id="加载"><a class="header-anchor" href="#加载">¶</a>加载</h2>
+<p>加载需要作三件事情。</p>
+<ol>
+<li>根据类的全限定名找到类的字节流。</li>
+<li>将静态的字节流，加载道方法区</li>
+<li>在内存中生成对应的类型的class 对象。</li>
+</ol>
+<p>在着一个过程中，我们不仅可以从本地加载类型的二进制字节流，还可以从网络，压缩包中加载。</p>
+<p>使用。</p>
+<h3 id="类加载器-classloader"><a class="header-anchor" href="#类加载器-classloader">¶</a>类加载器 classloader</h3>
+<p>一个类型，需要由类本身和类加载器共同限定，不同的类加载器加载同一个二进制流，所加载的类型是不一样的。</p>
+<p>例如：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">classLoadTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> ClassNotFoundException, IllegalAccessException, InstantiationException </span>&#123;</span><br><span class="line">        ClassLoader cl = <span class="keyword">new</span> ClassLoader() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="keyword">public</span> Class&lt;?&gt; loadClass(String s) <span class="keyword">throws</span> ClassNotFoundException &#123;</span><br><span class="line">                String name = s + <span class="string">&quot;.class&quot;</span>;</span><br><span class="line">                InputStream in = getClass().getResourceAsStream(name);</span><br><span class="line">                <span class="keyword">if</span> (in == <span class="keyword">null</span>)&#123;</span><br><span class="line">                    <span class="keyword">return</span> <span class="keyword">super</span>.loadClass(s);</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="keyword">byte</span>[] bin = <span class="keyword">new</span> <span class="keyword">byte</span>[in.available()];</span><br><span class="line">                    in.read(bin);</span><br><span class="line">                    <span class="keyword">return</span> defineClass(s,bin,<span class="number">0</span>, bin.length);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (IOException e) &#123;</span><br><span class="line">                    e.printStackTrace();</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">        Object o = cl.loadClass(<span class="string">&quot;classLoadTest&quot;</span>).newInstance();</span><br><span class="line">        System.out.println(o.getClass());</span><br><span class="line">        System.out.println(o <span class="keyword">instanceof</span> classLoadTest);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>最终输出为 <code>false</code></p>
+<p>两个对象相等包含对象的 <code>equals</code> <code>hash</code>等方法的返回结果。</p>
+<p>因此要保证最基本的类型例如<code>Object</code>类型的正确加载，需要把最基本的类型交给最顶层的类加载器加载。</p>
+<h4 id="java-的类加载器"><a class="header-anchor" href="#java-的类加载器">¶</a>java 的类加载器</h4>
+<pre class="mermaid">graph LR
+bootstrap_class_loader --> extension_class_loader --> application_class_loader --> user_define_class_loader</pre>
+<p>使用双亲委派模型，</p>
+<p>从最底层开始也就是从用户自定义的类加器开始，先委派父类加载器加载，如果父类加载器无法加载，就自己加载，这样递归从下往上，保证了类型加载的一致性。</p>
+<p>双亲委派使得java类型有先天的等级关系。</p>
+<h2 id="验证"><a class="header-anchor" href="#验证">¶</a>验证</h2>
+<p>保证java虚拟机不会被恶意将阿va字节码攻击的预防手段。</p>
+<p>验证的四个部分：</p>
+<ul>
+<li>文件格式的验证</li>
+<li>元数据的验证</li>
+<li>字节码的验证</li>
+<li>符号引用的验证</li>
+</ul>
+<blockquote>
+<p>文件格式验证：</p>
+</blockquote>
+<p>文件格式包含文件开头的魔术，版本号，常量池的类型正确与否等等。</p>
+<p>这个阶段主要是保输入的文件能正确的保存在方法去内，此过程是基于二进制字节流的。</p>
+<p>在经过文件个的验证之后，其他的验证步骤都是在方法区进行的。</p>
+<blockquote>
+<p>元数据的验证</p>
+</blockquote>
+<p>对字节码数据进行语义分析，保证字节码符合虚拟机规范</p>
+<blockquote>
+<p>字节码的验证</p>
+</blockquote>
+<p>保证类型中方法符合逻辑，不会并且在控制流中不会出现参数和执行的指令不配套的情况，或者出现跳出字节码执行范围的操作，类型转换是否准确等等，着一个步骤主要是保证字节码执行不会危害虚拟机。</p>
+<blockquote>
+<p>符号引用的验证</p>
+</blockquote>
+<p>发生在解析阶段，在进行符号引用到直接引用的解析过程中，着一个过程主要检查符号引用能否被找到，能否访问，保证后续的解析过程能够正常进行。</p>
+<h2 id="准备阶段"><a class="header-anchor" href="#准备阶段">¶</a>准备阶段</h2>
+<p>准备阶段进行类变量的空间划分以及零值初始化。</p>
+<p><em><strong>在 <code>java8</code> 中，类变量是跟随class对象一起存储在堆中的</strong></em></p>
+<h2 id="解析"><a class="header-anchor" href="#解析">¶</a>解析</h2>
+<blockquote>
+<p>解析是把符号引用转化为直接引用的过程</p>
+</blockquote>
+<ul>
+<li>
+<p>类型的解析</p>
+<p>对类或者接口进行解析</p>
+<p>我们假设引用处所需要的类型为D，引用为N，解析出的类为C</p>
+</li>
+<li>
+<p>字段的解析</p>
+</li>
+<li>
+<p>方法的解析</p>
+</li>
+</ul>
+<h1>字节码执行引擎</h1>
+<blockquote>
+<p>执行字节码的两种形式：</p>
+</blockquote>
+<p>解释执行和编译执行。</p>
+<p>使用运行时栈来管理运行时各种信息（局部变量，操作栈，动态链接，返回地址）</p>
+<p>使用栈帧来对应每一个执行的方法。</p>
+<h2 id="局部变量表"><a class="header-anchor" href="#局部变量表">¶</a>局部变量表</h2>
+<p>java中使用变量槽来进行内存的分配，一个槽的大小应该能够容纳Boolean,byte,char,short,int,float,reference,returnAddress这几种变量，至于一个槽的具体大小没有规定，这些变量都可以使用32位的槽来容纳，但是这并不意味着一一个槽的大小一定是32位的，即使在64位的机器上，虚拟机的开发者应该使用填充的方式让变量槽看起来和32位上的虚拟机相同。</p>
+<p>而对于long和double类型的数据由于占用的64位，因此在32位槽的虚拟机中需要使用两个槽来装载数据，但是对于两个槽的读写操作虚拟机并不保证其原子性，但是在栈帧中，由于栈帧是线程私有的数据结构，因此不存在竞争条件，因此也就不用担心，原子性操作的问题。</p>
+<p>对于reference类型，需要实现两个功能：</p>
+<ul>
+<li>通过reference类型找到java堆中的对象</li>
+<li>可以在方法区中找到对应的类型信息</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">    <span class="keyword">byte</span>[] placehoulder = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">1024</span> * <span class="number">1024</span> * <span class="number">1024</span>];</span><br><span class="line">    System.out.gc();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这一段代码在 <code>gc</code> 之后并不会产生垃圾回收，原因是，<code>gc</code>和<code>placehoulder</code>在同一个代码快内.</p>
+<p>对这段代码进行改进。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">byte</span>[] placehoulder = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">1024</span> * <span class="number">1024</span> * <span class="number">1024</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.gc();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这样还是不行,原因是，即使该gc和placehoulder不再一个代码快中，但是，由于java局部变量表中placehoulder引用依然和对中的实例保持联系，因此，palcehoulder依然在gcroot的范围中，因此不会被垃圾回收。</p>
+<p>局部变量表中存在槽的复用，因此打破这种规范的一种方式是，声明一个变量对变量槽进行复用，从而切断palcehoulder的引用关系，从而垃圾回收。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">byte</span>[] placehoulder = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">1024</span> * <span class="number">1024</span> * <span class="number">1024</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    System.out.gc();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上面的代码就可以进行垃圾回收了。</p>
+</div></article></div></main><footer><div class="paginator"><a class="next" href="/2021/03/12/java-GC/">next</a></div><div class="copyright"><p>&copy; 2021 <a href="https://luoxiner.github.io">John Doe</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>
