@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://luoxiner.github.io/2021/03/12/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%96%87%E4%BB%B6%E5%AD%90%E7%B3%BB%E7%BB%9F/</loc>
-    <lastmod>2021-03-12</lastmod>
+    <loc>https://luoxiner.github.io/2021/03/14/volatile-%E5%92%8C-%E5%8F%AF%E8%A7%81%E6%80%A7/</loc>
+    <lastmod>2021-03-31</lastmod>
   </url>
   <url>
     <loc>https://luoxiner.github.io/2021/03/12/java-GC/</loc>
+    <lastmod>2021-03-12</lastmod>
+  </url>
+  <url>
+    <loc>https://luoxiner.github.io/2021/03/12/%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%96%87%E4%BB%B6%E5%AD%90%E7%B3%BB%E7%BB%9F/</loc>
     <lastmod>2021-03-12</lastmod>
   </url>
   <url>
